@@ -1,0 +1,1687 @@
+<!DOCTYPE html>
+<html lang="de-CH">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
+<link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAp0lEQVR4XmPk5hb6zzCAgGkA7QYDFmId8PXrO2KVggE3txBR6odOCMDANRsbvD7TOnIErzw6GPAQGHXAaAgQXQ7AQAvfA5JSOSEwGgWjITDgIUByLnhUZ4c/YW9bRijho4ABD4FRB4yGAKO2thVRreKrV4+RlLq1ta2IUj/gUQAvB/ZOR3WLc+Y/sA8Q4pC2IKY4BJArPuAhMOqA0RAguhygFRjwKAAAyX4hNSVClPEAAAAASUVORK5CYII=">
+<title>ZWISCHENZEIT – Retro-Verkehrsspiel: Steuere die Ampel</title>
+<meta name="description" content="Retro-Verkehrsspiel im Browser: Steuere die Lichtsignalanlage einer Kreuzung, bringe Autos, Linksabbieger und Fussgänger sicher durch und vermeide Rückstau. Gratis, ohne Installation, mit Online-Rangliste.">
+<meta name="keywords" content="Verkehrsspiel, Ampelspiel, Lichtsignalanlage, Kreuzung, Retro Spiel, Browserspiel, Verkehrsplanung, Verkehrssicherheit, Pixel Game">
+<link rel="canonical" href="https://zwischenzeit.vercel.app/">
+<meta name="theme-color" content="#0b0b12">
+<!-- Link-Vorschau (WhatsApp, Teams, LinkedIn usw.) -->
+<meta property="og:type" content="website">
+<meta property="og:locale" content="de_CH">
+<meta property="og:site_name" content="ZWISCHENZEIT">
+<meta property="og:title" content="ZWISCHENZEIT – Retro-Verkehrsspiel">
+<meta property="og:description" content="Steuere die Ampel einer Kreuzung. Keine Unfälle, kein Rückstau. Gratis im Browser, mit Rangliste.">
+<meta property="og:url" content="https://zwischenzeit.vercel.app/">
+<meta property="og:image" content="https://zwischenzeit.vercel.app/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<!-- Web-App -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Zwischenzeit">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<!-- Strukturierte Daten für Suchmaschinen -->
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"VideoGame","name":"ZWISCHENZEIT","url":"https://zwischenzeit.vercel.app/","image":"https://zwischenzeit.vercel.app/og-image.png",
+ "description":"Retro-Verkehrsspiel im Browser: Steuere die Lichtsignalanlage einer Kreuzung, bringe Autos, Linksabbieger und Fussgänger sicher durch und vermeide Rückstau. Gratis, ohne Installation, mit Online-Rangliste.","genre":["Arcade","Simulation"],"gamePlatform":"Webbrowser","applicationCategory":"Game",
+ "operatingSystem":"Alle mit modernem Browser","inLanguage":"de","isAccessibleForFree":true}
+</script>
+<style>
+  html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
+  body { display: flex; align-items: center; justify-content: center;
+         padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); box-sizing: border-box; }
+  #wrap { position: relative; }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  canvas { display: block; image-rendering: pixelated; image-rendering: crisp-edges; touch-action: none; }
+  /* CRT-Effekt: Scanlines und Vignette */
+  /* Namensdialog über dem Spielfeld */
+  #namebox { position: absolute; inset: 0; z-index: 2; display: flex; align-items: center; justify-content: center;
+             background: rgba(0,0,0,0.6); font: bold clamp(12px, 3.6vmin, 20px) monospace; color: #e8e8e8; }
+  #namebox[hidden] { display: none; }
+  .nb-panel { background: #0b0b12; border: 3px solid #5a4a1c; padding: 1.2em; width: 78%; text-align: center; }
+  .nb-title { color: #e8c23c; margin-bottom: 0.8em; letter-spacing: 0.05em; }
+  #nameinput { width: 100%; box-sizing: border-box; font: inherit; font-size: 1.4em; text-transform: uppercase; text-align: center;
+               background: #2b2b3a; color: #e8c23c; border: 2px solid #8a8aa0; padding: 0.3em; outline: none; }
+  .nb-hint { color: #7a7a8a; font-size: 0.75em; margin: 0.5em 0 1em; }
+  .nb-buttons { display: flex; gap: 0.6em; }
+  .nb-buttons button { flex: 1; font: inherit; padding: 0.6em 0; border: 0; cursor: pointer; }
+  #nameok { background: #3cc85a; color: #0b0b12; }
+  #nameskip { background: #2b2b3a; color: #e8e8e8; }
+  .nb-link { display: block; margin-top: 1em; color: #8a8aa0; font-size: 0.75em; }
+  .nb-link[hidden] { display: none; }
+  #wrap::after {
+    content: ''; position: absolute; inset: 0; pointer-events: none;
+    background: repeating-linear-gradient(to bottom, rgba(0,0,0,0.16) 0, rgba(0,0,0,0.16) 1px, transparent 1px, transparent 3px);
+    box-shadow: inset 0 0 80px rgba(0,0,0,0.55);
+  }
+</style>
+</head>
+<body>
+<h1 class="sr-only">ZWISCHENZEIT – Retro-Verkehrsspiel</h1>
+<p class="sr-only">Steuere die Lichtsignalanlage einer Kreuzung. Wechsle die Phasen zwischen Nord-Süd und Ost-West, gib den Fussgängern Grün,
+lass Linksabbieger Lücken finden und verhindere Unfälle und Rückstau. Je höher das Level, desto dichter der Verkehr.
+Gratis im Browser spielbar, auf dem Handy auch als App installierbar, mit Online-Rangliste.</p>
+<div id="wrap"><canvas id="game" width="240" height="360"></canvas>
+  <div id="namebox" hidden>
+    <div class="nb-panel">
+      <div class="nb-title">DEIN NAME FÜR DIE RANGLISTE</div>
+      <input id="nameinput" maxlength="12" autocomplete="off" autocapitalize="characters" spellcheck="false" enterkeyhint="done">
+      <div class="nb-hint">MAX. 12 ZEICHEN, A-Z UND 0-9</div>
+      <div class="nb-buttons"><button id="nameok">OK</button><button id="nameskip">OHNE NAME</button></div>
+      <a id="privacylink" class="nb-link" href="datenschutz.html" target="_blank" rel="noopener" hidden>Hinweise zum Datenschutz</a>
+    </div>
+  </div>
+</div>
+<script src="config.js"></script>
+<script>
+'use strict';
+
+/* =========================================================
+   1. KONSTANTEN
+   Alle Zeiten und Geschwindigkeiten sind frei gewählte
+   Spielwerte, keine Normwerte.
+   ========================================================= */
+const W = 240, H = 240, HUD_H = 16;   // H = Höhe der Spielwelt
+const CH = 360, PY = 240;
+
+// Online-Rangliste: URL der Google-Apps-Script-Web-App, gesetzt in config.js (Web-App-Version).
+// Leer = Spiel ohne Rangliste.
+const RANGLISTE_URL = (typeof window !== 'undefined' && window.RANGLISTE_URL) || '';
+const LB_ON = /^https:\/\//.test(RANGLISTE_URL);
+const PRIVACY_PAGE = (typeof window !== 'undefined' && window.DATENSCHUTZ_SEITE) || false;              // Gesamthöhe Hochformat, Beginn Bedienfeld
+
+const COL = {
+  SCHWARZ: '#0b0b12', ASPHALT: '#2b2b3a', ASPH_D: '#24242f', ASPH_L: '#333345',
+  MARK: '#e8e8e8', GRAS: '#1f4d2b', GRAS_L: '#29603a', GRAS_D: '#193f24',
+  TROTT: '#5c5c70', KANTE: '#8a8aa0',
+  ROT: '#d63c3c', ROT_D: '#5a1c1c', GELB: '#e8c23c', GELB_D: '#5a4a1c',
+  GRUEN: '#3cc85a', GRUEN_D: '#1c4a26', BLAU: '#3c7ad6',
+  DACH: '#b8613f', DACH_D: '#8a4230', FIRST: '#5a2a1e',
+  BAUM: '#2e7a3e', BAUM_L: '#4aa058', BAUM_D: '#143a20', SCHATTEN: '#12301c',
+  WASSER: '#2a5aa8', WASSER_L: '#5a8ad8', WEG: '#a89068', HOLZ: '#7a5232',
+  GLAS: '#141420', LICHT: '#f4e8a0', GRAU: '#7a7a8a', GRAU_D: '#55556a',
+  SOLAR: '#263a6a', SOLAR_L: '#3a5290', WEISS: '#c8c8d0', HAUT: '#e8b890'
+};
+
+// Fahrzeugfarben [Karosserie, Dach]
+const CAR_COLS = [
+  ['#3c7ad6', '#6a9ae8'], ['#d0d0d8', '#f0f0f4'], ['#3cb4c8', '#7ad4e0'],
+  ['#8a5ad6', '#ac88e8'], ['#d6843c', '#e8aa70']
+];
+// Kräftige Kleiderfarben, damit Fussgänger auf Trottoir und Streifen auffallen
+const SHIRTS = ['#ff6aa0', '#4ae0f0', '#9ae83c', '#ff9a3c', '#f4f4f4', '#b07aff'];
+const PANTS = '#2a2a58';
+
+const T_YELLOW = 1.0;     // Gelbzeit [s]
+const T_ALLRED = 1.0;     // minimale Alles-Rot-Zeit [s], verlängert sich bis der Knoten frei ist
+const T_MIN_GREEN = 2.0;  // Mindestgrün [s]
+const T_PED = 3.0;        // Dauer Fussgängerphase [s]
+const T_PED_GO = 1.5;     // davon Grün für Fussgänger, Rest = Räumzeit [s]
+
+const GAP = 3;            // Mindestabstand zwischen Fahrzeugen [px]
+const DECEL = 120;        // Bremsverzögerung [px/s²]
+const TYPES = {
+  PW: { len: 6,  vmax: 40, acc: 60, vturn: 18 },
+  LW: { len: 12, vmax: 25, acc: 30, vturn: 14 }
+};
+
+const PED_SPEED = 15, PED_PATIENCE = 8, PED_PENALTY_AFTER = 5, PED_MAX_WAIT = 3;
+const PED_WARN = 3, PED_ALARM = 1.5;   // Warnung [s] bevor ein Fussgänger bei Rot losläuft
+const RIGHT_DECEL = 40;              // sanftes Abbremsen der Rechtsabbieger [px/s²]
+const JAM_YELLOW = 5, JAM_RED = 3, LIVES = 3, CARS_PER_LEVEL = 50, RUNNER_P = 0.03;
+const ACCIDENT_FREEZE = 0.6, HEAVY_FACTOR = 1.3;
+
+// Knotenfläche inkl. Fussgängerstreifen (muss vor Grün der Querrichtung leer sein)
+const ZONE = [104, 112, 32, 32];
+
+// Zufahrten: Achse A = Nord-Süd, Achse B = Ost-West.
+// pos = zurückgelegte Distanz der Fahrzeugfront ab Bildrand.
+// wait = Warteposition der Linksabbieger im Knoten, turn = Abbiegekurve (quadratische Bézierkurve)
+const APPROACH = {
+  N: { axis: 'A', len: 224, stop: 96, wait: 106, entry: 104, exit: 120, fwd: [0, 1],
+       rect: (p, l) => [114, HUD_H + p - l, 4, l],
+       turn: { p0: [116, 122], c: [116, 132], p1: [128, 132], to: 'W', toPos: 128 },
+       rwait: 100, rturn: { p0: [116, 116], c: [116, 124], p1: [108, 124], to: 'E', toPos: 132 } },
+  S: { axis: 'A', len: 224, stop: 96, wait: 106, entry: 104, exit: 120, fwd: [0, -1],
+       rect: (p, l) => [122, H - p, 4, l],
+       turn: { p0: [124, 134], c: [124, 124], p1: [112, 124], to: 'E', toPos: 128 },
+       rwait: 100, rturn: { p0: [124, 140], c: [124, 132], p1: [132, 132], to: 'W', toPos: 132 } },
+  W: { axis: 'B', len: 240, stop: 104, wait: 114, entry: 112, exit: 128, fwd: [1, 0],
+       rect: (p, l) => [p - l, 130, l, 4],
+       turn: { p0: [114, 132], c: [124, 132], p1: [124, 120], to: 'S', toPos: 120 },
+       rwait: 108, rturn: { p0: [108, 132], c: [116, 132], p1: [116, 140], to: 'N', toPos: 124 } },
+  E: { axis: 'B', len: 240, stop: 104, wait: 114, entry: 112, exit: 128, fwd: [-1, 0],
+       rect: (p, l) => [W - p, 122, l, 4],
+       turn: { p0: [126, 124], c: [116, 124], p1: [116, 136], to: 'N', toPos: 120 },
+       rwait: 108, rturn: { p0: [132, 124], c: [124, 124], p1: [124, 116], to: 'S', toPos: 124 } }
+};
+const DIRS = ['N', 'S', 'W', 'E'];
+const OPP = { N: 'S', S: 'N', W: 'E', E: 'W' };
+
+// Fussgängerstreifen: Startpunkt Seite 0, Laufrichtung, Länge, Versatz der Warteschlange
+const CROSS = {
+  N: { x0: 109, y0: 116, dx: 1, dy: 0, L: 20, sx: 0,  sy: -4 },
+  S: { x0: 109, y0: 138, dx: 1, dy: 0, L: 20, sx: 0,  sy: 4 },
+  W: { x0: 107, y0: 118, dx: 0, dy: 1, L: 20, sx: -4, sy: 0 },
+  E: { x0: 131, y0: 118, dx: 0, dy: 1, L: 20, sx: 4,  sy: 0 }
+};
+
+// Signalgeber (Gehäuse oben links)
+const HEADS = { N: [102, 100], S: [134, 148], W: [98, 142], E: [134, 104] };
+
+function levelParams(l) {
+  // turn = Anteil Abbieger gesamt, davon 25 % links und 75 % rechts
+  let p;
+  if (l === 1) p = { rate: 0.26, lw: 0,    ped: 0.06, turn: 0.08, run: false };
+  else if (l === 2) p = { rate: 0.28, lw: 0.15, ped: 0.08, turn: 0.12, run: false };
+  else if (l === 3) p = { rate: 0.30, lw: 0.20, ped: 0.10, turn: 0.15, run: true };
+  else p = { rate: 0.30 + 0.02 * (l - 3), lw: 0.25, ped: 0.10 + 0.02 * (l - 3), turn: Math.min(0.25, 0.15 + 0.02 * (l - 3)), run: true };
+  p.left = p.turn * 0.25;
+  p.right = p.turn * 0.75;
+  if (state.demo) p.run = false;
+  return p;
+}
+
+/* =========================================================
+   2. PIXEL-FONT (3x5)
+   ========================================================= */
+const FONT = {
+  A:'010101111101101', B:'110101110101110', C:'011100100100011', D:'110101101101110',
+  E:'111100110100111', F:'111100110100100', G:'011100101101011', H:'101101111101101',
+  I:'111010010010111', J:'001001001101010', K:'101101110101101', L:'100100100100111',
+  M:'101111111101101', N:'110101101101101', O:'010101101101010', P:'110101110100100',
+  Q:'010101101110011', R:'110101110101101', S:'011100010001110', T:'111010010010010',
+  U:'101101101101111', V:'101101101101010', W:'101101111111101', X:'101101010101101',
+  Y:'101101010010010', Z:'111001010100111', 'Ä':'101000010111101', 'Ö':'101000111101111',
+  'Ü':'101000101101111', '0':'111101101101111', '1':'010110010010111', '2':'110001010100111',
+  '3':'110001010001110', '4':'101101111001001', '5':'111100110001110', '6':'011100111101111',
+  '7':'111001010010010', '8':'111101111101111', '9':'111101111001110', ' ':'000000000000000',
+  ':':'000010000010000', '!':'010010010000010', '-':'000000111000000', '.':'000000000000010',
+  '/':'001001010100100', '+':'000010111010000', '=':'000111000111000', ',':'000000000010100'
+};
+
+function textWidth(str, s = 1) { return str.length * 4 * s - s; }
+
+function drawText(str, x, y, col, s = 1, c = ctx) {
+  c.fillStyle = col;
+  str = str.toUpperCase();
+  for (let i = 0; i < str.length; i++) {
+    // Umlaute: normaler Buchstabe mit zwei Punkten darüber (im 3x5-Raster sonst nicht lesbar)
+    const uml = { 'Ä': 'A', 'Ö': 'O', 'Ü': 'U' }[str[i]];
+    if (uml) { c.fillRect(x + i * 4 * s, y - 2 * s, s, s); c.fillRect(x + i * 4 * s + 2 * s, y - 2 * s, s, s); }
+    const g = FONT[uml || str[i]] || FONT[' '];
+    for (let b = 0; b < 15; b++) {
+      if (g[b] === '1') c.fillRect(x + i * 4 * s + (b % 3) * s, y + Math.floor(b / 3) * s, s, s);
+    }
+  }
+}
+
+function drawTextC(str, y, col, s = 1, shadow = false) {
+  const x = Math.floor((W - textWidth(str, s)) / 2);
+  if (shadow) drawText(str, x + s, y + s, COL.SCHWARZ, s);
+  drawText(str, x, y, col, s);
+}
+
+/* =========================================================
+   3. SOUND (Web Audio, erst nach erster Eingabe)
+   ========================================================= */
+let actx = null, soundMode = 'all';   // all = Musik + Effekte | fx = nur Effekte | off
+
+function initAudio() {
+  if (actx) return;
+  try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { actx = null; }
+}
+
+function beep(freq, dur, type = 'square', delay = 0) {
+  if (!actx || soundMode === 'off' || state.demo) return;
+  try {
+    const t = actx.currentTime + delay;
+    const o = actx.createOscillator(), g = actx.createGain();
+    o.type = type;
+    o.frequency.value = freq;
+    g.gain.setValueAtTime(0.06, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+    o.connect(g); g.connect(actx.destination);
+    o.start(t); o.stop(t + dur + 0.02);
+  } catch (e) { /* Ton ist optional */ }
+}
+
+/* =========================================================
+   4. SPIELZUSTAND
+   ========================================================= */
+const state = {
+  mode: 'title',          // title (mit Demo-Verkehr) | play | pause | over
+  demo: true, demoSwitches: 0,
+  time: 0, score: 0, lives: LIVES, level: 1, carsPassed: 0,
+  queues: {}, pending: {}, jam: {}, peds: [], particles: [], popups: [],
+  freeze: 0, flash: null, toast: '', toastT: 0,
+  heavy: 'A', reason: '', hs: 0, newHs: false, board: false
+};
+
+const sig = { state: 'GREEN', axis: 'A', t: 0, req: false, ped: false, cycle: 0 };
+
+function loadHs() {
+  try { state.hs = parseInt(localStorage.getItem('zwischenzeit_hs') || '0', 10) || 0; } catch (e) { state.hs = 0; }
+}
+function loadSound() {
+  try {
+    const v = localStorage.getItem('zwischenzeit_sound');
+    soundMode = v === '0' || v === 'off' ? 'off' : v === 'fx' ? 'fx' : 'all';
+  } catch (e) { soundMode = 'all'; }
+}
+function toggleSound() {
+  soundMode = soundMode === 'all' ? 'fx' : soundMode === 'fx' ? 'off' : 'all';
+  try { localStorage.setItem('zwischenzeit_sound', soundMode); } catch (e) { /* ignorieren */ }
+  beep(660, 0.05);
+}
+
+/* ---------- Hintergrundmusik (eigene Komposition, Chiptune) ----------
+   8 Takte in a-Moll (Am - F - C - G | Am - F - C - E), 16tel-Raster.
+   Lead: Rechteck mit Echo, Bass: Dreieck, Drums: Rauschen und Sinus-Kick. */
+const LEAD = [
+  'A4 . C5 . E5 . A5 . G5 . E5 . C5 . D5 E5',
+  'F5 . . . E5 . C5 . A4 . C5 . F5 . E5 .',
+  'G5 . . . E5 . G5 . C6 . B5 . G5 . E5 .',
+  'D5 . G5 . B5 . D6 . B5 . G5 . D5 . B4 .',
+  'A5 . G5 . E5 . C5 . E5 . A5 . C6 . B5 A5',
+  'A5 . . . F5 . A5 . C6 . A5 . F5 . C5 .',
+  'E5 . G5 . C6 . G5 . E5 . C5 . E5 . G5 .',
+  'B4 . D5 . E5 . G#5 . B5 . . . . . - -'
+].map(b => b.split(' '));
+const BASS = ['A2', 'F2', 'C3', 'G2', 'A2', 'F2', 'C3', 'E2'];
+
+const music = { next: 0, step: 0, on: false, gain: null, noise: null };
+
+function noteFreq(n) {
+  const m = /^([A-G])(#?)(\d)$/.exec(n);
+  const semi = { C: -9, D: -7, E: -5, F: -4, G: -2, A: 0, B: 2 }[m[1]] + (m[2] ? 1 : 0) + (parseInt(m[3], 10) - 4) * 12;
+  return 440 * Math.pow(2, semi / 12);
+}
+
+function musicBpm() { return state.mode === 'title' ? 112 : 120 + Math.min(state.level - 1, 6) * 4; }
+
+function tone(type, freq, t, dur, vol) {
+  const o = actx.createOscillator(), g = actx.createGain();
+  o.type = type;
+  o.frequency.setValueAtTime(freq, t);
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.linearRampToValueAtTime(vol, t + 0.005);
+  g.gain.setValueAtTime(vol * 0.7, t + Math.min(0.05, dur * 0.5));
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g); g.connect(music.gain);
+  o.start(t); o.stop(t + dur + 0.02);
+}
+
+function drum(kind, t) {
+  if (kind === 'kick') {
+    const o = actx.createOscillator(), g = actx.createGain();
+    o.frequency.setValueAtTime(150, t);
+    o.frequency.exponentialRampToValueAtTime(40, t + 0.12);
+    g.gain.setValueAtTime(0.5, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.15);
+    o.connect(g); g.connect(music.gain);
+    o.start(t); o.stop(t + 0.17);
+    return;
+  }
+  const src = actx.createBufferSource(), f = actx.createBiquadFilter(), g = actx.createGain();
+  src.buffer = music.noise;
+  f.type = kind === 'snare' ? 'bandpass' : 'highpass';
+  f.frequency.value = kind === 'snare' ? 1800 : 7000;
+  const len = kind === 'snare' ? 0.12 : 0.03;
+  g.gain.setValueAtTime(kind === 'snare' ? 0.35 : 0.12, t);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + len);
+  src.connect(f); f.connect(g); g.connect(music.gain);
+  src.start(t); src.stop(t + len + 0.01);
+}
+
+function playStep(i, t, d) {
+  const bar = Math.floor(i / 16) % 8, s = i % 16;
+  // Lead mit Echo
+  const tok = LEAD[bar][s];
+  if (tok && tok !== '.' && tok !== '-') {
+    let len = 1;
+    while (s + len < 16 && LEAD[bar][s + len] === '.' && len < 4) len++;
+    const f = noteFreq(tok);
+    tone('square', f, t, d * len * 0.95, 0.07);
+    tone('square', f, t + d * 3, d * len * 0.8, 0.022);
+  }
+  // Bass: pumpende Achtel mit Oktavsprung
+  if (s % 2 === 0) {
+    const f = noteFreq(BASS[bar]) * (s % 4 === 2 ? 2 : 1);
+    tone('triangle', f, t, d * 1.7, 0.16);
+  }
+  // Drums
+  if (s === 0 || s === 8 || (s === 10 && bar % 2 === 1)) drum('kick', t);
+  if (s === 4 || s === 12) drum('snare', t);
+  if (s % 2 === 1) drum('hat', t);
+  if (bar === 7 && s >= 12) drum('snare', t);     // kleiner Fill vor der Wiederholung
+}
+
+// Wird in jedem Frame aufgerufen und plant die Musik etwas im Voraus
+function musicTick() {
+  if (!actx) return;
+  const want = soundMode === 'all' && (state.mode === 'play' || state.mode === 'title') && !document.hidden;
+  if (!want) { music.on = false; return; }
+  try {
+    if (!music.gain) {
+      music.gain = actx.createGain();
+      music.gain.gain.value = 0.5;
+      music.gain.connect(actx.destination);
+      const n = actx.sampleRate;
+      music.noise = actx.createBuffer(1, n, n);
+      const data = music.noise.getChannelData(0);
+      for (let k = 0; k < n; k++) data[k] = Math.random() * 2 - 1;
+    }
+    const now = actx.currentTime;
+    if (!music.on || music.next < now - 0.05) { music.on = true; music.next = now + 0.05; }
+    const d = 60 / musicBpm() / 4;
+    while (music.next < now + 0.15) {
+      playStep(music.step, music.next, d);
+      music.next += d;
+      music.step = (music.step + 1) % 128;
+    }
+  } catch (e) { /* Musik ist optional */ }
+}
+
+/* ---------- Spielername und Online-Rangliste ---------- */
+let playerName = '', nameAsked = false;
+
+function cleanName(str) {
+  return String(str || '').toUpperCase().replace(/[^A-Z0-9ÄÖÜ .\-]/g, '').replace(/\s+/g, ' ').trim().slice(0, 12);
+}
+function loadName() {
+  try {
+    playerName = cleanName(localStorage.getItem('zwischenzeit_name'));
+    nameAsked = !!localStorage.getItem('zwischenzeit_name_asked');
+  } catch (e) { /* ignorieren */ }
+}
+function storeName() {
+  try {
+    localStorage.setItem('zwischenzeit_name', playerName);
+    localStorage.setItem('zwischenzeit_name_asked', '1');
+  } catch (e) { /* ignorieren */ }
+}
+
+// status: idle | loading | sending | ok | error | noname | zero
+const lb = { status: 'idle', top: [], rank: 0, total: 0 };
+
+async function lbRequest(opts) {
+  const ctl = new AbortController();
+  const timer = setTimeout(() => ctl.abort(), 10000);
+  try {
+    const r = await fetch(RANGLISTE_URL, Object.assign({ signal: ctl.signal, cache: 'no-store', redirect: 'follow' }, opts));
+    const j = await r.json();
+    if (!j.ok) throw new Error(j.error || 'Fehler');
+    return j;
+  } finally { clearTimeout(timer); }
+}
+
+function lbLoad() {
+  if (!LB_ON) return;
+  lb.status = 'loading';
+  lbRequest({}).then(j => { lb.top = j.top || []; lb.total = j.total || 0; lb.status = 'ok'; })
+               .catch(() => { lb.status = 'error'; });
+}
+
+function lbSubmit(score, level) {
+  lb.rank = 0;
+  if (!LB_ON) { lb.status = 'idle'; return; }
+  if (!playerName) { lb.status = 'noname'; return; }
+  if (score <= 0) { lb.status = 'zero'; return; }
+  lb.status = 'sending';
+  // text/plain vermeidet eine CORS-Vorabanfrage, die Apps Script nicht beantwortet
+  lbRequest({ method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+              body: JSON.stringify({ name: playerName, score, level }) })
+    .then(j => { lb.top = j.top || []; lb.rank = j.rank || 0; lb.total = j.total || 0; lb.status = 'ok'; })
+    .catch(e => {
+      const m = e && e.message;
+      lb.status = m === 'name' ? 'badname' : m === 'zu_schnell' ? 'toofast' : m === 'unplausibel' ? 'implausible' : 'error';
+      if (lb.status !== 'error') lbLoad2();
+    });
+}
+
+// Rangliste nach abgelehnter Punktzahl trotzdem anzeigen, Status bleibt erhalten
+function lbLoad2() {
+  const keep = lb.status;
+  lbRequest({}).then(j => { lb.top = j.top || []; lb.total = j.total || 0; lb.status = keep; }).catch(() => {});
+}
+
+function openBoard() { if (!LB_ON) return; state.board = true; lbLoad(); }
+
+function saveHs() {
+  try { localStorage.setItem('zwischenzeit_hs', String(state.hs)); } catch (e) { /* ignorieren */ }
+}
+
+function startGame(demo = false) {
+  if (!demo) music.step = 0;
+  Object.assign(state, {
+    mode: demo ? 'title' : 'play', demo, demoSwitches: 0,
+    score: 0, lives: LIVES, level: demo ? 2 : 1, carsPassed: 0, peds: [], particles: [], popups: [],
+    freeze: 0, flash: null, toast: demo ? '' : 'LEVEL 1', toastT: demo ? 0 : 2, reason: '', newHs: false,
+    heavy: Math.random() < 0.5 ? 'A' : 'B'
+  });
+  for (const d of DIRS) { state.queues[d] = []; state.pending[d] = 0; state.jam[d] = 0; }
+  Object.assign(sig, { state: 'GREEN', axis: 'A', t: 0, req: false, ped: false, cycle: 0 });
+}
+
+function gameOver(reason) {
+  if (state.demo) { startGame(true); return; }
+  state.mode = 'over';
+  state.reason = reason;
+  if (state.score > state.hs) { state.hs = state.score; state.newHs = true; saveHs(); }
+  lbSubmit(state.score, state.level);
+  beep(220, 0.2); beep(165, 0.2, 'square', 0.2); beep(110, 0.4, 'square', 0.4);
+}
+
+/* =========================================================
+   5. ENTITÄTEN
+   ========================================================= */
+function makeVehicle(dir) {
+  const p = levelParams(state.level);
+  const type = Math.random() < p.lw ? 'LW' : 'PW';
+  const t = TYPES[type];
+  const cc = CAR_COLS[Math.floor(Math.random() * CAR_COLS.length)];
+  const runner = p.run && Math.random() < RUNNER_P;
+  const v = {
+    dir, type, len: t.len, vmax: t.vmax, acc: t.acc, vturn: t.vturn,
+    col: type === 'LW' ? COL.GELB : cc[0], roof: type === 'LW' ? COL.GELB : cc[1],
+    pos: 0, v: 0, brake: false, committed: false, runner, yc: -1,
+    turning: false, d: 0
+  };
+  const r = Math.random();
+  v.left = !runner && r < p.left;
+  v.right = !runner && !v.left && r < p.left + p.right;
+  v.points = v.left ? 2 : 1;          // Linksabbieger zählen doppelt
+  return v;
+}
+
+function vehRect(v) { return APPROACH[v.dir].rect(v.pos, v.len); }
+
+// Abbiegekurven vorberechnen (Bogenlänge über Stützpunkte), L = links, R = rechts
+const ARC = { L: {}, R: {} };
+for (const d of DIRS) {
+  for (const kind of ['L', 'R']) {
+    const t = kind === 'L' ? APPROACH[d].turn : APPROACH[d].rturn;
+    const pts = [[0, t.p0[0], t.p0[1]]];
+    let L = 0, px = t.p0[0], py = t.p0[1];
+    for (let i = 1; i <= 100; i++) {
+      const u = i / 100, a = (1 - u) * (1 - u), b = 2 * u * (1 - u), c = u * u;
+      const x = a * t.p0[0] + b * t.c[0] + c * t.p1[0];
+      const y = a * t.p0[1] + b * t.c[1] + c * t.p1[1];
+      L += Math.hypot(x - px, y - py);
+      pts.push([L, x, y]);
+      px = x; py = y;
+    }
+    ARC[kind][d] = { L, pts };
+  }
+}
+
+function turnKind(v) { return v.left ? 'L' : 'R'; }
+
+// Punkt auf dem Abbiegeweg, s = Distanz ab Beginn der Kurve
+function pathPoint(d, s, kind = 'L') {
+  const ap = APPROACH[d], a = ARC[kind][d], t = kind === 'L' ? ap.turn : ap.rturn;
+  if (s <= 0) return [t.p0[0] + ap.fwd[0] * s, t.p0[1] + ap.fwd[1] * s];
+  if (s >= a.L) {
+    const f = APPROACH[t.to].fwd;
+    return [t.p1[0] + f[0] * (s - a.L), t.p1[1] + f[1] * (s - a.L)];
+  }
+  let i = 1;
+  while (a.pts[i][0] < s) i++;
+  const p = a.pts[i - 1], q = a.pts[i], u = (s - p[0]) / (q[0] - p[0]);
+  return [p[1] + (q[1] - p[1]) * u, p[2] + (q[2] - p[2]) * u];
+}
+
+// Kollisionsflächen eines Fahrzeugs
+function bodyRects(v) {
+  if (!v.turning) return [vehRect(v)];
+  const out = [];
+  for (let k = 0; k <= v.len - 4; k += 2) {
+    const [x, y] = pathPoint(v.dir, v.d - 2 - k, turnKind(v));
+    out.push([x - 2, y - 2, 4, 4]);
+  }
+  return out;
+}
+
+function makePed(cw, side) {
+  return { cw, side, s: 0, walking: false, jay: false, waitT: 0, pen: 0,
+           shirt: SHIRTS[Math.floor(Math.random() * SHIRTS.length)] };
+}
+
+function pedStart(p) {
+  const c = CROSS[p.cw];
+  return p.side === 0 ? [c.x0, c.y0, 1] : [c.x0 + c.dx * c.L, c.y0 + c.dy * c.L, -1];
+}
+
+function pedPos(p, k) {
+  const c = CROSS[p.cw];
+  const [x, y, d] = pedStart(p);
+  if (p.walking) return [x + d * c.dx * p.s, y + d * c.dy * p.s];
+  return [x + c.sx * k, y + c.sy * k];   // Position in der Warteschlange
+}
+
+/* =========================================================
+   6. SIGNALSTEUERUNG (Zustandsmaschine)
+   GREEN -> YELLOW -> ALLRED -> (PED -> ALLRED ->) GREEN
+   ALLRED dauert mindestens T_ALLRED und so lange, bis der Knoten leer ist.
+   ========================================================= */
+function setSig(s) { sig.state = s; sig.t = 0; }
+
+function updateSignal(dt) {
+  sig.t += dt;
+  switch (sig.state) {
+    case 'GREEN':
+      if ((sig.req || sig.ped) && sig.t >= T_MIN_GREEN) { setSig('YELLOW'); sig.cycle++; }
+      break;
+    case 'YELLOW':
+      if (sig.t >= T_YELLOW) setSig('ALLRED');
+      break;
+    case 'ALLRED':
+      if (sig.t >= T_ALLRED && !zoneBusy()) {
+        if (sig.ped) { setSig('PED'); beep(660, 0.06); }
+        else { sig.axis = sig.axis === 'A' ? 'B' : 'A'; sig.req = false; setSig('GREEN'); beep(440, 0.05); }
+      }
+      break;
+    case 'PED':
+      if (sig.t >= T_PED) { sig.ped = false; setSig('ALLRED'); }
+      break;
+  }
+}
+
+function vehSignal(dir) {
+  if (APPROACH[dir].axis !== sig.axis) return 'R';
+  if (sig.state === 'GREEN') return 'G';
+  if (sig.state === 'YELLOW') return 'Y';
+  return 'R';
+}
+
+// Anzeige mit Schweizer Rot-Gelb vor Grün (nur optisch)
+function headSignal(dir) {
+  const s = vehSignal(dir);
+  if (s === 'R' && sig.state === 'ALLRED' && !sig.ped && sig.t >= T_ALLRED * 0.5 &&
+      APPROACH[dir].axis !== sig.axis && !zoneBusy()) return 'RY';
+  return s;
+}
+
+function pedGreen() { return sig.state === 'PED' && sig.t < T_PED_GO; }
+
+function requestSwitch() { if (sig.state === 'GREEN') sig.req = true; }
+function requestPed() { if (sig.state === 'GREEN') sig.ped = true; }
+
+function zoneBusy() {
+  for (const d of DIRS) {
+    for (const v of state.queues[d]) {
+      for (const r of bodyRects(v)) if (overlap(r, ZONE)) return true;
+    }
+  }
+  return false;
+}
+
+/* =========================================================
+   7. UPDATE-LOGIK
+   ========================================================= */
+function spawnVehicles(dt) {
+  const p = levelParams(state.level);
+  for (const d of DIRS) {
+    const rate = p.rate * (APPROACH[d].axis === state.heavy ? HEAVY_FACTOR : 1);
+    if (Math.random() < rate * dt) state.pending[d]++;
+    const q = state.queues[d];
+    if (state.pending[d] > 0) {
+      const last = q[q.length - 1];
+      const space = last ? last.pos - last.len - GAP : Infinity;
+      if (space >= 0) {
+        const v = makeVehicle(d);
+        v.v = Math.min(v.vmax, Math.sqrt(2 * DECEL * Math.min(space, 1000)));
+        q.push(v);
+        state.pending[d]--;
+      }
+    }
+    // Rückstau-Timer
+    if (state.pending[d] > 0) {
+      const before = state.jam[d];
+      state.jam[d] += dt;
+      // In der roten Phase jede Sekunde ein Warnton
+      if (state.jam[d] > JAM_YELLOW && Math.floor(state.jam[d]) !== Math.floor(before)) beep(330, 0.12, 'sawtooth');
+      if (state.jam[d] >= JAM_YELLOW + JAM_RED) { gameOver('RÜCKSTAU'); return false; }
+    } else state.jam[d] = 0;
+  }
+  return true;
+}
+
+// Lückenprüfung des Linksabbiegers gegenüber dem Gegenverkehr
+// Hält dieses Fahrzeug sicher an der Haltelinie? (gleiche Regel wie in updateVehicles)
+function willStop(o) {
+  if (o.runner || o.committed) return false;
+  const s = vehSignal(o.dir), dist = APPROACH[o.dir].stop - o.pos;
+  if (dist < 0) return false;
+  if (s === 'R') return true;
+  if (s === 'Y') return o.yc === sig.cycle ? true : !yellowGo(o, dist);
+  return false;
+}
+
+function yellowGo(v, dist) { return v.v * v.v / (2 * DECEL) > dist + 0.5; }
+
+// Ist der ganze Abbiegeweg im Moment frei von anderen Fahrzeugen?
+function pathClear(v, kind = 'L') {
+  const L = ARC[kind][v.dir].L, path = [];
+  for (let s = 0; s <= L + (kind === 'R' ? v.len : 2); s += 2) {
+    const [x, y] = pathPoint(v.dir, s, kind);
+    path.push([x - 2, y - 2, 4, 4]);
+  }
+  for (const d of DIRS) {
+    if (d === v.dir) continue;
+    for (const o of state.queues[d]) {
+      for (const r of bodyRects(o)) for (const p of path) if (overlap(p, r)) return false;
+    }
+  }
+  return true;
+}
+
+function canTurn(v) {
+  if (!pathClear(v)) return false;
+  const opp = OPP[v.dir], oa = APPROACH[opp];
+  const tNeed = (ARC.L[v.dir].L + v.len + 6) / v.vturn;
+  for (const o of state.queues[opp]) {
+    if (o.turning) return false;                 // Gegenüber biegt gerade ab
+    if (o.left) break;                           // wartender Linksabbieger blockiert alles dahinter
+    if (o.pos - o.len > oa.exit + 2) continue;   // bereits durch
+    if (o.pos >= oa.entry - 2) return false;     // im Konfliktbereich
+    if (willStop(o)) continue;
+    if ((oa.entry - 2 - o.pos) / o.vmax < tNeed) return false;
+  }
+  return true;
+}
+
+function updateVehicles(dt) {
+  for (const d of DIRS) {
+    const q = state.queues[d], ap = APPROACH[d];
+    for (let i = 0; i < q.length; i++) {
+      const v = q[i], lead = q[i - 1];
+      if (v.turning) { v.d += v.vturn * dt; v.brake = false; continue; }
+      let limit = lead ? lead.pos - lead.len - GAP : Infinity;
+      const dist = ap.stop - v.pos;
+      if (dist < 0) v.committed = true;            // Haltelinie überfahren
+      if (!v.runner && !v.committed) {
+        const s = vehSignal(d);
+        // Bei Gelb: einmalige Entscheidung zu Beginn, durchfahren nur wenn Anhalten nicht mehr möglich
+        if (s === 'Y' && v.yc !== sig.cycle) { v.yc = sig.cycle; if (yellowGo(v, dist)) v.committed = true; }
+        if (s !== 'G' && !v.committed) limit = Math.min(limit, ap.stop);
+      }
+      if (v.left) limit = Math.min(limit, ap.wait);
+      if (v.right) limit = Math.min(limit, ap.rwait);
+      const gap = limit - v.pos;
+      let vDes = Math.min(v.vmax, Math.sqrt(2 * DECEL * Math.max(0, gap)));
+      // Rechtsabbieger verlangsamen sanft auf Abbiegegeschwindigkeit
+      if (v.right) vDes = Math.min(vDes, Math.sqrt(v.vturn * v.vturn + 2 * RIGHT_DECEL * Math.max(0, ap.rwait - v.pos)));
+      const vOld = v.v;
+      v.v = v.v < vDes ? Math.min(vDes, v.v + v.acc * dt) : vDes;
+      v.brake = v.v < vOld - 0.01 || v.v < 0.5;
+      v.pos = Math.max(v.pos, Math.min(v.pos + v.v * dt, limit));
+      if (v.left && v.pos >= ap.wait - 0.05 && canTurn(v)) { v.turning = true; v.d = 0; }
+      if (v.right && v.pos >= ap.rwait - 0.05 && pathClear(v, 'R')) { v.turning = true; v.d = 0; }
+    }
+    // Abbieger, welche die Kurve beendet haben, in die Zielfahrbahn übergeben
+    for (let i = q.length - 1; i >= 0; i--) {
+      const v = q[i];
+      const kind = turnKind(v), arcL = v.turning ? ARC[kind][d].L : 0;
+      // Linksabbieger wechseln am Kurvenende, Rechtsabbieger erst wenn auch das Heck aus der Kurve ist
+      if (v.turning && v.d >= arcL + (kind === 'R' ? v.len : 0)) {
+        q.splice(i, 1);
+        const t = kind === 'L' ? ap.turn : ap.rturn, to = t.to, tq = state.queues[to];
+        if (kind === 'L') popup('+2', t.p1[0], t.p1[1]);
+        Object.assign(v, { dir: to, pos: t.toPos + (v.d - arcL), v: v.vturn,
+                           committed: true, left: false, right: false, turning: false });
+        let k = 0;
+        while (k < tq.length && tq[k].pos > v.pos) k++;
+        tq.splice(k, 0, v);
+      }
+    }
+  }
+  // Ausfahrende Fahrzeuge entfernen
+  for (const d of DIRS) {
+    const q = state.queues[d], ap = APPROACH[d];
+    while (q.length && q[0].pos - q[0].len > ap.len) {
+      const v = q.shift();
+      state.score += v.points;
+      state.carsPassed += 1;
+      checkLevel();
+    }
+  }
+}
+
+function checkLevel() {
+  if (state.demo) return;
+  const l = 1 + Math.floor(state.carsPassed / CARS_PER_LEVEL);
+  if (l > state.level) {
+    state.level = l;
+    state.heavy = Math.random() < 0.5 ? 'A' : 'B';
+    state.toast = 'LEVEL ' + l;
+    state.toastT = 2;
+    beep(523, 0.08); beep(659, 0.08, 'square', 0.09); beep(784, 0.12, 'square', 0.18);
+  }
+}
+
+function spawnPeds(dt) {
+  const p = levelParams(state.level);
+  if (Math.random() < p.ped * dt) {
+    const cw = DIRS[Math.floor(Math.random() * 4)];
+    const side = Math.random() < 0.5 ? 0 : 1;
+    const waiting = state.peds.filter(x => !x.walking && x.cw === cw && x.side === side).length;
+    if (waiting < PED_MAX_WAIT) state.peds.push(makePed(cw, side));
+  }
+}
+
+function updatePeds(dt) {
+  const green = pedGreen();
+  for (let i = state.peds.length - 1; i >= 0; i--) {
+    const p = state.peds[i];
+    if (!p.walking) {
+      p.waitT += dt;
+      if (!p.alarmed && PED_PATIENCE - p.waitT < PED_ALARM) { p.alarmed = true; beep(1200, 0.04); beep(1200, 0.04, 'square', 0.08); }
+      if (green) p.walking = true;
+      else if (p.waitT >= PED_PATIENCE) { p.walking = true; p.jay = true; }
+      if (p.waitT > PED_PENALTY_AFTER && !p.walking) {
+        p.pen += dt;
+        while (p.pen >= 1) { p.pen -= 1; state.score = Math.max(0, state.score - 1); }
+      }
+    } else {
+      p.s += PED_SPEED * dt;
+      if (p.s >= CROSS[p.cw].L) {
+        state.peds.splice(i, 1);
+        state.score += 2;
+        beep(880, 0.04);
+      }
+    }
+  }
+}
+
+function overlap(a, b) {
+  return a[0] < b[0] + b[2] && b[0] < a[0] + a[2] && a[1] < b[1] + b[3] && b[1] < a[1] + a[3];
+}
+
+function removeVehicle(v) {
+  const q = state.queues[v.dir];
+  const i = q.indexOf(v);
+  if (i >= 0) q.splice(i, 1);
+}
+
+function accident(r1, r2) {
+  const x = Math.max(r1[0], r2[0]), y = Math.max(r1[1], r2[1]);
+  state.flash = { x, y };
+  state.freeze = ACCIDENT_FREEZE;
+  if (!state.demo) state.lives -= 1;
+  state.toast = 'UNFALL!';
+  state.toastT = 1.2;
+  const cols = [COL.ROT, COL.GELB, COL.MARK, COL.GRAU];
+  for (let i = 0; i < 16; i++) {
+    const a = Math.random() * Math.PI * 2, s = 15 + Math.random() * 35;
+    state.particles.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, t: 0.5 + Math.random() * 0.5,
+                           c: cols[i % cols.length] });
+  }
+  beep(110, 0.3, 'sawtooth');
+}
+
+function checkCollisions() {
+  const bodies = [];
+  for (const d of DIRS) for (const v of state.queues[d]) bodies.push({ v, d, rs: bodyRects(v) });
+  for (let i = 0; i < bodies.length; i++) {
+    for (let j = i + 1; j < bodies.length; j++) {
+      const a = bodies[i], b = bodies[j];
+      if (a.d === b.d) continue;
+      for (const ra of a.rs) for (const rb of b.rs) {
+        if (overlap(ra, rb)) { accident(ra, rb); removeVehicle(a.v); removeVehicle(b.v); return; }
+      }
+    }
+  }
+  for (let i = 0; i < state.peds.length; i++) {
+    const p = state.peds[i];
+    if (!p.walking) continue;
+    const [px, py] = pedPos(p, 0);
+    const rp = [px, py, 2, 2];
+    for (const b of bodies) for (const r of b.rs) {
+      if (overlap(rp, r)) { accident(rp, r); removeVehicle(b.v); state.peds.splice(i, 1); return; }
+    }
+  }
+}
+
+function popup(text, x, y) {
+  if (!state.demo) state.popups.push({ text, x, y, t: 1.2 });
+}
+
+function updateParticles(dt) {
+  for (let i = state.popups.length - 1; i >= 0; i--) {
+    const p = state.popups[i];
+    p.y -= 8 * dt; p.t -= dt;
+    if (p.t <= 0) state.popups.splice(i, 1);
+  }
+  for (let i = state.particles.length - 1; i >= 0; i--) {
+    const p = state.particles[i];
+    p.x += p.vx * dt; p.y += p.vy * dt;
+    p.vx *= 0.92; p.vy *= 0.92;
+    p.t -= dt;
+    if (p.t <= 0) state.particles.splice(i, 1);
+  }
+}
+
+// Automatische Steuerung für den Demo-Verkehr im Titelbild
+function demoControl() {
+  if (sig.state !== 'GREEN' || sig.req || sig.ped) return;
+  if (sig.t >= 5) {
+    state.demoSwitches++;
+    if (state.demoSwitches % 3 === 0) requestPed(); else requestSwitch();
+  }
+}
+
+function step(dt) {
+  state.time += dt;
+  if (state.toastT > 0) state.toastT -= dt;
+  updateParticles(dt);
+  if (state.mode !== 'play' && state.mode !== 'title') return;
+  if (state.freeze > 0) {
+    state.freeze -= dt;
+    if (state.freeze <= 0) {
+      state.flash = null;
+      if (state.lives <= 0) gameOver('UNFALL');
+    }
+    return;
+  }
+  if (state.demo) demoControl();
+  updateSignal(dt);
+  if (!spawnVehicles(dt)) return;
+  updateVehicles(dt);
+  spawnPeds(dt);
+  updatePeds(dt);
+  checkCollisions();
+}
+
+/* =========================================================
+   8. RENDER-LOGIK
+   ========================================================= */
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+ctx.imageSmoothingEnabled = false;
+
+function rect(x, y, w, h, c, g = ctx) { g.fillStyle = c; g.fillRect(x, y, w, h); }
+function blink(f = 4) { return Math.floor(state.time * f) % 2 === 0; }
+
+// ---------- Statischer Hintergrund (einmal vorgerendert) ----------
+function rng(seed) {
+  return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+}
+
+function disc(g, cx, cy, r, c) {
+  for (let y = -r; y <= r; y++) for (let x = -r; x <= r; x++) {
+    if (x * x + y * y <= r * r + r * 0.6) rect(cx + x, cy + y, 1, 1, c, g);
+  }
+}
+
+function tree(g, x, y, r) {
+  disc(g, x + 1, y + 2, r, COL.SCHATTEN);
+  disc(g, x, y, r, COL.BAUM_D);
+  disc(g, x, y, r - 1, COL.BAUM);
+  disc(g, x - 1, y - 1, Math.max(1, r - 3), COL.BAUM_L);
+}
+
+function gableRoof(g, x, y, w, h, horizontal) {
+  rect(x + 2, y + 2, w, h, COL.SCHATTEN, g);   // Schlagschatten
+  if (horizontal) {
+    const m = Math.floor(h / 2);
+    rect(x, y, w, m, COL.DACH, g);
+    rect(x, y + m, w, h - m, COL.DACH_D, g);
+    for (let yy = y + 2; yy < y + h; yy += 3) rect(x, yy, w, 1, yy < y + m ? COL.DACH_D : COL.FIRST, g);
+    rect(x, y + m, w, 1, COL.FIRST, g);
+  } else {
+    const m = Math.floor(w / 2);
+    rect(x, y, m, h, COL.DACH, g);
+    rect(x + m, y, w - m, h, COL.DACH_D, g);
+    for (let xx = x + 2; xx < x + w; xx += 3) rect(xx, y, 1, h, xx < x + m ? COL.DACH_D : COL.FIRST, g);
+    rect(x + m, y, 1, h, COL.FIRST, g);
+  }
+}
+
+function buildBackground() {
+  const bg = document.createElement('canvas');
+  bg.width = W; bg.height = H;
+  const g = bg.getContext('2d');
+  const r = rng(42);
+
+  // Wiese mit Textur und Blumen
+  rect(0, HUD_H, W, H - HUD_H, COL.GRAS, g);
+  for (let i = 0; i < 900; i++) rect(Math.floor(r() * W), HUD_H + Math.floor(r() * (H - HUD_H)), 1, 1, r() < 0.5 ? COL.GRAS_L : COL.GRAS_D, g);
+  for (let i = 0; i < 40; i++) rect(Math.floor(r() * W), HUD_H + Math.floor(r() * (H - HUD_H)), 1, 1, r() < 0.5 ? COL.GELB : '#e87ab0', g);
+
+  // NW: zwei Einfamilienhäuser mit Garten und Pool
+  rect(4, 20, 42, 1, COL.BAUM_D, g); rect(4, 20, 1, 40, COL.BAUM_D, g); rect(4, 60, 42, 1, COL.BAUM_D, g);
+  gableRoof(g, 8, 24, 30, 22, true);
+  rect(30, 26, 3, 3, COL.GRAU_D, g);                       // Kamin
+  gableRoof(g, 56, 22, 22, 30, false);
+  rect(82, 30, 14, 10, COL.MARK, g); rect(83, 31, 12, 8, COL.WASSER_L, g); rect(84, 34, 10, 1, COL.WASSER, g);
+  rect(62, 52, 8, 56, COL.WEG, g);                          // Gartenweg zum Trottoir
+  for (const [x, y, s] of [[14, 72, 4], [30, 86, 5], [48, 72, 4], [86, 64, 3], [10, 100, 3], [86, 92, 4]]) tree(g, x, y, s);
+
+  // NE: Schulhaus mit Flachdach und Solaranlage
+  rect(154, 26, 76, 56, COL.SCHATTEN, g);
+  rect(152, 24, 76, 56, COL.GRAU_D, g);
+  rect(153, 25, 74, 54, COL.GRAU, g);
+  for (const yy of [30, 50]) {
+    rect(158, yy, 52, 14, COL.SOLAR, g);
+    for (let xx = 158; xx < 210; xx += 6) rect(xx, yy, 1, 14, COL.SOLAR_L, g);
+    rect(158, yy + 7, 52, 1, COL.SOLAR_L, g);
+  }
+  rect(214, 30, 8, 6, COL.GRAU_D, g); rect(216, 32, 2, 2, COL.MARK, g);   // Lüftung
+  rect(214, 66, 8, 8, COL.GRAU_D, g); rect(217, 69, 2, 2, COL.WASSER_L, g);
+  rect(186, 80, 10, 28, COL.WEG, g);                                      // Zugang
+  for (const [x, y, s] of [[146, 30, 3], [146, 60, 4], [168, 96, 4], [210, 96, 5], [232, 92, 3]]) tree(g, x, y, s);
+
+  // SW: Parkplatz mit Zufahrt
+  rect(60, 140, 12, 20, COL.ASPH_L, g);
+  rect(8, 158, 82, 70, COL.ASPH_L, g);
+  for (let x = 12; x <= 84; x += 8) { rect(x, 160, 1, 10, COL.MARK, g); rect(x, 216, 1, 10, COL.MARK, g); }
+  const parked = [[14, 'S'], [30, 'S'], [38, 'S'], [62, 'N'], [78, 'S']];
+  parked.forEach(([x, d], i) => drawCarSprite(g, x, 162, d, CAR_COLS[i % CAR_COLS.length], 6));
+  [[22, 'N'], [46, 'S'], [54, 'N'], [70, 'S']].forEach(([x, d], i) => drawCarSprite(g, x, 218, d, CAR_COLS[(i + 2) % CAR_COLS.length], 6));
+  for (const [x, y, s] of [[100, 190, 4], [100, 216, 4], [30, 236, 4], [6, 150, 3], [84, 236, 3]]) tree(g, x, y, s);
+
+  // SE: Park mit Weiher, Weg und Bank
+  for (let t = 0; t <= 1; t += 0.004) {
+    const x = 150 + 88 * t, y = 168 + 68 * t + Math.sin(t * 6) * 6;
+    rect(Math.round(x) - 1, Math.round(y) - 1, 3, 3, COL.WEG, g);
+  }
+  for (let y = -11; y <= 11; y++) for (let x = -19; x <= 19; x++) {
+    const e = (x * x) / 361 + (y * y) / 121;
+    if (e <= 1) rect(210 + x, 176 + y, 1, 1, e > 0.75 ? COL.WASSER_L : COL.WASSER, g);
+  }
+  rect(176, 190, 7, 2, COL.HOLZ, g); rect(176, 192, 1, 1, COL.HOLZ, g); rect(182, 192, 1, 1, COL.HOLZ, g);
+  for (const [x, y, s] of [[156, 224, 5], [180, 232, 4], [232, 206, 4], [154, 152, 3], [236, 150, 4], [190, 152, 3]]) tree(g, x, y, s);
+
+  // Trottoirs mit Randsteinen
+  rect(108, HUD_H, 24, H - HUD_H, COL.TROTT, g);
+  rect(0, 116, W, 24, COL.TROTT, g);
+  rect(60, 136, 12, 4, COL.ASPH_L, g);                       // abgesenkte Zufahrt Parkplatz
+  rect(111, HUD_H, 1, H - HUD_H, COL.KANTE, g); rect(128, HUD_H, 1, H - HUD_H, COL.KANTE, g);
+  rect(0, 119, W, 1, COL.KANTE, g); rect(0, 136, W, 1, COL.KANTE, g);
+  for (let i = 0; i < 160; i++) {                            // Plattenfugen
+    const x = Math.floor(r() * W), y = HUD_H + Math.floor(r() * (H - HUD_H));
+    if ((x >= 108 && x < 132) || (y >= 116 && y < 140)) rect(x, y, 1, 1, COL.GRAU_D, g);
+  }
+
+  // Fahrbahnen mit Belagstextur
+  rect(112, HUD_H, 16, H - HUD_H, COL.ASPHALT, g);
+  rect(0, 120, W, 16, COL.ASPHALT, g);
+  for (let i = 0; i < 500; i++) {
+    const x = Math.floor(r() * W), y = HUD_H + Math.floor(r() * (H - HUD_H));
+    if ((x >= 112 && x < 128) || (y >= 120 && y < 136)) rect(x, y, 1, 1, r() < 0.5 ? COL.ASPH_D : COL.ASPH_L, g);
+  }
+
+  // Markierung: Leitlinien und Sicherheitslinien vor dem Knoten
+  for (let y = HUD_H + 2; y < 88; y += 6) rect(119, y, 1, 3, COL.MARK, g);
+  rect(119, 88, 1, 24, COL.MARK, g);
+  rect(119, 144, 1, 24, COL.MARK, g);
+  for (let y = 172; y < H; y += 6) rect(119, y, 1, 3, COL.MARK, g);
+  for (let x = 1; x < 80; x += 6) rect(x, 127, 3, 1, COL.MARK, g);
+  rect(80, 127, 24, 1, COL.MARK, g);
+  rect(136, 127, 24, 1, COL.MARK, g);
+  for (let x = 162; x < W; x += 6) rect(x, 127, 3, 1, COL.MARK, g);
+
+  // Haltelinien
+  rect(112, 112, 8, 1, COL.MARK, g);
+  rect(120, 142, 8, 1, COL.MARK, g);
+  rect(104, 128, 1, 8, COL.MARK, g);
+  rect(135, 120, 1, 8, COL.MARK, g);
+
+  return bg;
+}
+
+// ---------- Fahrzeuge ----------
+// Liefert die Weltkoordinate des Fahrzeugpixels (u = ab Front, w = ab linker Seite)
+function pixelMapper(dir, x0, y0, len) {
+  switch (dir) {
+    case 'N': return (u, w) => [x0 + 3 - w, y0 + len - 1 - u];
+    case 'S': return (u, w) => [x0 + w, y0 + u];
+    case 'W': return (u, w) => [x0 + len - 1 - u, y0 + w];
+    default:  return (u, w) => [x0 + u, y0 + 3 - w];
+  }
+}
+
+function vehPixel(v, u, w) {
+  const side = w === 0 || w === 3;
+  if ((v.left || v.right) && blink(5) && w === (v.left ? 0 : 3) && (u === 0 || u === v.len - 1)) return COL.GELB;   // Blinker
+  if (u === v.len - 1) return side ? (v.brake ? COL.ROT : COL.ROT_D) : (v.type === 'LW' ? COL.GRAU_D : v.col);
+  if (u === 0) return side ? COL.LICHT : v.col;
+  if (v.type === 'LW') {
+    if (u === 1) return side ? v.col : COL.GLAS;
+    if (u === 2) return v.col;
+    if (u === 3) return COL.GLAS;
+    return side ? COL.GRAU : (u === 7 ? COL.GRAU : COL.WEISS);
+  }
+  if (u === 1 || u === 4) return side ? v.col : COL.GLAS;
+  return side ? v.col : v.roof;
+}
+
+function drawCarSprite(g, x0, y0, dir, cc, len) {
+  const fake = { type: 'PW', len, col: cc[0], roof: cc[1], brake: false, left: false, right: false };
+  const map = pixelMapper(dir, x0, y0, len);
+  for (let u = 0; u < len; u++) for (let w = 0; w < 4; w++) {
+    const [x, y] = map(u, w);
+    rect(x, y, 1, 1, vehPixel(fake, u, w), g);
+  }
+}
+
+function drawVehicle(v) {
+  if (v.turning) {
+    for (let k = v.len - 1; k >= 0; k--) {
+      const [x, y] = pathPoint(v.dir, v.d - 0.5 - k, turnKind(v));
+      const c = v.type === 'LW' ? (k < 3 ? v.col : COL.WEISS) : (k === 1 || k === v.len - 2 ? v.roof : v.col);
+      rect(Math.round(x - 2), Math.round(y - 2), 4, 4, c);
+    }
+    const [gx, gy] = pathPoint(v.dir, v.d - 1.5, turnKind(v));
+    rect(Math.round(gx - 1), Math.round(gy - 1), 2, 2, COL.GLAS);
+    if (blink(5)) { const [bx, by] = pathPoint(v.dir, v.d - 0.5, turnKind(v)); rect(Math.round(bx), Math.round(by), 1, 1, COL.GELB); }
+    return;
+  }
+  const [rx, ry] = vehRect(v);
+  const x0 = Math.round(rx), y0 = Math.round(ry);
+  if (v.runner && blink(6)) {
+    const vert = v.dir === 'N' || v.dir === 'S';
+    rect(x0 - 1, y0 - 1, (vert ? 4 : v.len) + 2, (vert ? v.len : 4) + 2, COL.ROT);
+  }
+  const map = pixelMapper(v.dir, x0, y0, v.len);
+  for (let u = 0; u < v.len; u++) for (let w = 0; w < 4; w++) {
+    const [x, y] = map(u, w);
+    rect(x, y, 1, 1, vehPixel(v, u, w));
+  }
+}
+
+function drawCrosswalks() {
+  // Schweizer Fussgängerstreifen sind gelb
+  let zc = COL.GELB;
+  if (sig.state === 'PED') zc = pedGreen() ? COL.GRUEN : (blink(6) ? COL.GRUEN : COL.GELB);
+  for (let x = 112; x < 128; x += 2) { rect(x, 114, 1, 6, zc); rect(x, 136, 1, 6, zc); }
+  for (let y = 120; y < 136; y += 2) { rect(106, y, 6, 1, zc); rect(128, y, 6, 1, zc); }
+}
+
+function drawHeads() {
+  for (const d of DIRS) {
+    const [x, y] = HEADS[d];
+    const s = headSignal(d);
+    rect(x + 2, y + 9, 1, 2, COL.GRAU_D);                 // Mast
+    rect(x, y, 5, 9, COL.SCHWARZ);
+    rect(x + 1, y + 1, 3, 2, s === 'R' || s === 'RY' ? COL.ROT : COL.ROT_D);
+    rect(x + 1, y + 3, 3, 2, s === 'Y' || s === 'RY' ? COL.GELB : COL.GELB_D);
+    rect(x + 1, y + 5, 3, 2, s === 'G' ? COL.GRUEN : COL.GRUEN_D);
+    rect(x + 1, y + 7, 3, 1, COL.GRAU_D);
+  }
+}
+
+// Fussgänger-Sprite (Draufsicht), K = Kopf, S = Oberteil, L = Beine
+const PED_SPRITE = [
+  ['.K.', 'SSS', '.S.', 'L.L'],     // Schritt 1 / stehend
+  ['.K.', 'SSS', '.S.', '.L.']      // Schritt 2
+];
+
+// Kleiner Pfeil (Chevron) in Richtung dx/dy mit dunkler Kontur
+function chevron(x, y, dx, dy, col) {
+  // Form ">" in Laufrichtung: (längs, quer)
+  const px = [[1, 0], [0, -1], [0, 1], [-1, -2], [-1, 2]].map(([a, b]) => [x + a * dx - b * dy, y + a * dy + b * dx]);
+  for (const [a, b] of px) rect(a - 1, b - 1, 3, 3, COL.SCHWARZ);
+  for (const [a, b] of px) rect(a, b, 1, 1, col);
+}
+
+function drawPeds() {
+  const count = {};
+  for (const p of state.peds) {
+    const key = p.cw + p.side;
+    const k = p.walking ? 0 : (count[key] = (count[key] || 0) + 1) - 1;
+    const [fx, fy] = pedPos(p, k);
+    const x = Math.round(fx), y = Math.round(fy) - 1;
+    const c = CROSS[p.cw], dir = pedStart(p)[2];
+    const dx = c.dx * dir, dy = c.dy * dir;
+    const cx = x + 1, cy = y + 1;
+    const spr = PED_SPRITE[p.walking ? Math.floor(p.s / 2) % 2 : 0];
+    const rest = PED_PATIENCE - p.waitT;
+    // Kontur: schwarz, gelb blinkend als Vorwarnung, rot blinkend kurz vor dem Loslaufen und bei Rotläufern
+    let outline = COL.SCHWARZ;
+    if (p.jay) outline = blink(8) ? COL.ROT : COL.SCHWARZ;
+    else if (!p.walking && rest < PED_ALARM) outline = blink(10) ? COL.ROT : COL.SCHWARZ;
+    else if (!p.walking && rest < PED_WARN) outline = blink(5) ? COL.GELB : COL.SCHWARZ;
+    const hot = p.jay && blink(8);
+    // Gehrichtung: Pfeil vor dem Fussgänger (beim Warten nur beim vordersten)
+    if (p.walking) chevron(cx + dx * 5, cy + dy * 5, dx, dy, p.jay ? COL.ROT : COL.MARK);
+    else if (k === 0) chevron(cx + dx * 5, cy + dy * 5, dx, dy, rest < PED_WARN ? COL.GELB : COL.GRAU);
+    for (let r = 0; r < spr.length; r++) for (let cc = 0; cc < 3; cc++) {
+      if (spr[r][cc] === '.') continue;
+      rect(x + cc - 1, y + r, 3, 1, outline);
+      rect(x + cc, y + r - 1, 1, 3, outline);
+    }
+    for (let r = 0; r < spr.length; r++) for (let cc = 0; cc < 3; cc++) {
+      const ch = spr[r][cc];
+      if (ch === '.') continue;
+      const col = ch === 'K' ? COL.HAUT : ch === 'L' ? PANTS : (hot ? COL.GELB : p.shirt);
+      rect(x + cc, y + r, 1, 1, col);
+    }
+    if (!p.walking) {
+      if (rest < PED_ALARM) {
+        // Ausrufezeichen über dem Kopf
+        if (blink(10)) { rect(cx - 1, y - 8, 3, 7, COL.SCHWARZ); rect(cx, y - 7, 1, 3, COL.ROT); rect(cx, y - 3, 1, 1, COL.ROT); }
+      } else {
+        const ic = rest > 5 ? COL.GRUEN : COL.GELB;
+        rect(cx, y - 3, 1, 1, ic);
+      }
+    }
+  }
+}
+
+function drawJam() {
+  const band = { N: [112, HUD_H, 8, 3], S: [120, H - 3, 8, 3], W: [0, 128, 3, 8], E: [W - 3, 120, 3, 8] };
+  const box = { N: [122, HUD_H + 2], S: [110, H - 11], W: [4, 138], E: [W - 11, 110] };
+  for (const d of DIRS) {
+    const j = state.jam[d];
+    if (j <= 0) continue;
+    const red = j >= JAM_YELLOW;
+    if (blink(red ? 8 : 4)) rect(...band[d], red ? COL.ROT : COL.GELB);
+    // Warnschild mit Restzeit
+    const [bx, by] = box[d];
+    // Gesamte Restzeit bis Game Over: gelb 8 bis 4, rot 3 bis 0 (0 bleibt nach Game Over stehen)
+    const left = Math.max(0, Math.ceil(JAM_YELLOW + JAM_RED - j));
+    rect(bx - 1, by - 1, 9, 9, COL.SCHWARZ);
+    rect(bx, by, 7, 7, red ? (blink(8) ? COL.ROT : COL.ROT_D) : COL.GELB_D);
+    drawText(String(left), bx + 2, by + 1, red ? COL.MARK : COL.GELB);
+  }
+}
+
+function phaseText() {
+  switch (sig.state) {
+    case 'GREEN': return [sig.axis === 'A' ? 'N-S GRÜN' : 'O-W GRÜN', COL.GRUEN];
+    case 'YELLOW': return [sig.axis === 'A' ? 'N-S GELB' : 'O-W GELB', COL.GELB];
+    case 'ALLRED': return [sig.t >= T_ALLRED ? 'RÄUMEN' : 'ALLES ROT', COL.ROT];
+    default: return ['FUSSGÄNGER', COL.GRUEN];
+  }
+}
+
+// Knöpfe im Bedienfeld unten: [x, y, Breite, Höhe]
+const BTN = {
+  phase:   [6, 246, 150, 56],
+  fg:      [162, 246, 72, 56],
+  pause:   [6, 308, 72, 30],
+  restart: [84, 308, 72, 30],
+  sound:   [162, 308, 72, 30]
+};
+
+const ICONS = {
+  pause:   ['.......', '.##.##.', '.##.##.', '.##.##.', '.##.##.', '.##.##.', '.......'],
+  play:    ['.#.....', '.##....', '.###...', '.####..', '.###...', '.##....', '.#.....'],
+  restart: ['..###..', '.#...##', '#....##', '#......', '#.....#', '.#...#.', '..###..'],
+  sound:   ['...#...', '..##.#.', '####..#', '####..#', '####..#', '..##.#.', '...#...'],
+  mute:    ['...#...', '..##...', '####...', '####...', '####...', '..##...', '...#...'],
+  trophy:  ['#######', '#.###.#', '#.###.#', '.#####.', '..###..', '...#...', '.#####.'],
+  walker:  ['...##..', '...##..', '.......', '..###..', '.#.##.#', '#..##..', '...##..', '..#..#.', '.#....#', '#.....#']
+};
+
+function drawIcon(name, x, y, col, s = 1) {
+  const ic = ICONS[name];
+  for (let r = 0; r < ic.length; r++) for (let c = 0; c < ic[r].length; c++) if (ic[r][c] === '#') rect(x + c * s, y + r * s, s, s, col);
+}
+
+// Knopf mit Pixel-Kante; style: normal | active | warn | dim
+function drawButton(key, style = 'normal') {
+  const [x, y, w, h] = BTN[key];
+  const face = { normal: COL.ASPHALT, active: COL.GRUEN, warn: COL.GELB_D, dim: COL.ASPH_D }[style];
+  const light = { normal: COL.ASPH_L, active: '#7ae896', warn: COL.GELB, dim: COL.ASPH_D }[style];
+  rect(x, y + 2, w, h, COL.SCHWARZ);                 // Schatten
+  rect(x, y, w, h, face);
+  rect(x, y, w, 1, light); rect(x, y, 1, h, light);
+  rect(x, y + h - 1, w, 1, COL.ASPH_D); rect(x + w - 1, y, 1, h, COL.ASPH_D);
+  return [x, y, w, h];
+}
+
+function centerText(str, x, w, y, col, s = 1) {
+  drawText(str, x + Math.floor((w - textWidth(str, s)) / 2), y, col, s);
+}
+
+// Kleiner Signalgeber für das Bedienfeld
+function miniHead(x, y, s) {
+  rect(x, y, 5, 11, COL.SCHWARZ);
+  rect(x + 1, y + 1, 3, 3, s === 'R' || s === 'RY' ? COL.ROT : COL.ROT_D);
+  rect(x + 1, y + 4, 3, 3, s === 'Y' || s === 'RY' ? COL.GELB : COL.GELB_D);
+  rect(x + 1, y + 7, 3, 3, s === 'G' ? COL.GRUEN : COL.GRUEN_D);
+}
+
+function drawPanel() {
+  rect(0, PY, W, CH - PY, COL.SCHWARZ);
+  rect(0, PY, W, 1, COL.ASPH_L);
+  const playing = state.mode === 'play' || state.mode === 'pause';
+
+  // Grosser Knopf: Phase wechseln (oder Start)
+  if (playing) {
+    const busy = sig.state !== 'GREEN';
+    const [x, y, w] = drawButton('phase', sig.req ? 'warn' : busy ? 'dim' : 'normal');
+    centerText('PHASE WECHSELN', x, w, y + 6, busy && !sig.req ? COL.GRAU : COL.MARK, 1);
+    miniHead(x + 36, y + 18, headSignal('N'));
+    drawText('N-S', x + 32, y + 32, COL.GRAU);
+    miniHead(x + 108, y + 18, headSignal('W'));
+    drawText('O-W', x + 104, y + 32, COL.GRAU);
+    const [pt, pc] = phaseText();
+    centerText(sig.req ? 'ANGEFORDERT' : pt, x, w, y + 44, sig.req ? COL.GELB : pc);
+  } else {
+    const [x, y, w] = drawButton('phase', 'active');
+    centerText(state.mode === 'over' ? 'NOCHMAL' : 'START', x, w, y + 16, COL.SCHWARZ, 3);
+  }
+
+  if (!playing && LB_ON) {
+    // Ausserhalb des Spiels: Rangliste und Name
+    const [fx, fy, fw] = drawButton('fg', state.board ? 'active' : 'normal');
+    const fc = state.board ? COL.SCHWARZ : COL.MARK;
+    drawIcon('trophy', fx + 26, fy + 6, state.board ? COL.SCHWARZ : COL.GELB, 3);
+    centerText('RANGLISTE', fx, fw, fy + 43, fc);
+    const [px, py, pw] = drawButton('pause');
+    centerText('NAME ÄNDERN', px, pw, py + 12, COL.MARK);
+  } else {
+    // Fussgänger-Knopf
+    const fgStyle = !playing ? 'dim' : sig.ped ? 'active' : 'normal';
+    const [fx, fy, fw] = drawButton('fg', fgStyle);
+    drawIcon('walker', fx + 26, fy + 6, fgStyle === 'active' ? COL.SCHWARZ : fgStyle === 'dim' ? COL.GRAU_D : COL.MARK, 3);
+    centerText(sig.ped && playing ? 'ANGEFORDERT' : 'FUSSGÄNGER', fx, fw, fy + 43,
+               fgStyle === 'active' ? COL.SCHWARZ : fgStyle === 'dim' ? COL.GRAU_D : COL.MARK);
+
+    // Pause
+    const paused = state.mode === 'pause';
+    const [px, py] = drawButton('pause', !playing ? 'dim' : paused ? 'active' : 'normal');
+    const pc = !playing ? COL.GRAU_D : paused ? COL.SCHWARZ : COL.MARK;
+    drawIcon(paused ? 'play' : 'pause', px + 8, py + 11, pc);
+    drawText(paused ? 'WEITER' : 'PAUSE', px + 22, py + 12, pc);
+  }
+
+  const canRestart = state.mode !== 'title';
+  const [rx, ry] = drawButton('restart', canRestart ? 'normal' : 'dim');
+  const rc = canRestart ? COL.MARK : COL.GRAU_D;
+  drawIcon('restart', rx + 6, ry + 11, rc);
+  drawText('NEUSTART', rx + 18, ry + 12, rc);
+
+  const [sx, sy] = drawButton('sound');
+  if (soundMode !== 'off') {
+    drawIcon('sound', sx + 8, sy + 11, COL.MARK);
+    drawText(soundMode === 'all' ? 'MUSIK EIN' : 'NUR FX', sx + 22, sy + 12, soundMode === 'all' ? COL.GRUEN : COL.MARK);
+  }
+  else {
+    drawIcon('mute', sx + 8, sy + 11, COL.GRAU);
+    rect(sx + 13, sy + 13, 1, 1, COL.ROT); rect(sx + 15, sy + 13, 1, 1, COL.ROT); rect(sx + 14, sy + 14, 1, 1, COL.ROT);
+    rect(sx + 13, sy + 15, 1, 1, COL.ROT); rect(sx + 15, sy + 15, 1, 1, COL.ROT);
+    drawText('TON AUS', sx + 22, sy + 12, COL.GRAU);
+  }
+
+  // Fusszeile: Tastatur und Levelfortschritt
+  drawTextC(LB_ON && !playing ? 'TASTEN: ENTER  L RANGLISTE  N NAME  M TON' : 'TASTEN: LEERTASTE  F  P  R  M', 346, COL.GRAU_D);
+  if (playing || state.mode === 'over') {
+    const prog = (state.carsPassed % CARS_PER_LEVEL) / CARS_PER_LEVEL;
+    rect(6, 342, 228, 1, COL.ASPH_D);
+    rect(6, 342, Math.round(228 * prog), 1, COL.GRUEN);
+  }
+}
+
+function drawHud() {
+  rect(0, 0, W, HUD_H, COL.SCHWARZ);
+  rect(0, HUD_H - 1, W, 1, COL.ASPH_D);
+  if (state.mode === 'title') {
+    drawText('HIGHSCORE', 3, 2, COL.GRAU);
+    drawText(String(state.hs), 3, 9, COL.GELB);
+    if (LB_ON) {
+      drawText('SPIELER', 92, 2, COL.GRAU);
+      drawText(playerName || '-', 92, 9, playerName ? COL.GELB : COL.GRAU_D);
+    }
+    drawText('DEMO', 200, 6, blink(1) ? COL.GRAU : COL.GRAU_D);
+    return;
+  }
+  drawText('PUNKTE', 3, 2, COL.GRAU);
+  drawText(String(state.score), 3, 9, COL.MARK);
+  drawText('LEVEL', 32, 2, COL.GRAU);
+  drawText(String(state.level), 32, 9, COL.GELB);
+  drawText('HIGHSCORE', 58, 2, COL.GRAU);
+  drawText(String(Math.max(state.hs, state.score)), 58, 9, COL.GELB);
+  // Phasenanzeige
+  rect(100, 2, 100, 11, COL.ASPH_D);
+  const [pt, pc] = phaseText();
+  drawText(pt, 104, 5, pt === 'RÄUMEN' && !blink(4) ? COL.ROT_D : pc);
+  if (sig.req) drawText('+', 194, 5, COL.GELB);
+  // Sicherheitsleben als Sanitätskreuze
+  for (let i = 0; i < LIVES; i++) {
+    const x = 207 + i * 11, on = i < state.lives;
+    rect(x, 4, 7, 7, on ? COL.ROT : COL.ASPHALT);
+    rect(x + 3, 5, 1, 5, on ? COL.MARK : COL.ASPH_L);
+    rect(x + 1, 7, 5, 1, on ? COL.MARK : COL.ASPH_L);
+  }
+}
+
+function panel(x, y, w, h) {
+  ctx.globalAlpha = 0.88;
+  rect(x, y, w, h, COL.SCHWARZ);
+  ctx.globalAlpha = 1;
+  rect(x, y, w, 1, COL.GELB_D); rect(x, y + h - 1, w, 1, COL.GELB_D);
+  rect(x, y, 1, h, COL.GELB_D); rect(x + w - 1, y, 1, h, COL.GELB_D);
+}
+
+// Spielbeschreibung im Pausenbild
+const HELP = [
+  ['ZIEL', COL.GELB],
+  ['STEUERE DIE LICHTSIGNALANLAGE UND BRINGE MÖGLICHST', COL.MARK],
+  ['VIELE FAHRZEUGE UND FUSSGÄNGER SICHER DURCH DEN KNOTEN.', COL.MARK],
+  null,
+  ['STEUERUNG', COL.GELB],
+  ['LEERTASTE / KNOPF / FELD: PHASE N-S UND O-W WECHSELN', COL.MARK],
+  ['F / FUSSGÄNGER-KNOPF: FUSSGÄNGERPHASE ANFORDERN', COL.MARK],
+  ['P: PAUSE   R: NEUSTART   M: MUSIK / NUR FX / AUS', COL.MARK],
+  null,
+  ['REGELN', COL.GELB],
+  ['JEDER WECHSEL LÄUFT ÜBER GELB UND ALLES-ROT.', COL.MARK],
+  ['ALLES-ROT DAUERT, BIS DER KNOTEN GERÄUMT IST.', COL.MARK],
+  ['LINKSABBIEGER WARTEN IM KNOTEN AUF EINE LÜCKE,', COL.MARK],
+  ['DAHINTER STAUT SICH DER VERKEHR. RECHTSABBIEGER', COL.MARK],
+  ['BREMSEN VOR DER KURVE AB.', COL.MARK],
+  ['FUSSGÄNGER LAUFEN NACH 8 S WARTEN BEI ROT LOS.', COL.MARK],
+  ['VORHER BLINKEN SIE GELB, ZULETZT ROT MIT !', COL.MARK],
+  ['AB LEVEL 3 FAHREN ROT UMRANDETE AUTOS BEI ROT.', COL.MARK],
+  ['RÜCKSTAU AM RAND: 5 S GELB, 3 S ROT, DANN ENDE.', COL.ROT],
+  ['3 UNFÄLLE: GAME OVER.', COL.ROT],
+  null,
+  ['PUNKTE', COL.GELB],
+  ['+1 FAHRZEUG   +2 LINKSABBIEGER   +2 FUSSGÄNGER', COL.MARK],
+  ['-1 PRO SEKUNDE, WENN FUSSGÄNGER ÜBER 5 S WARTEN', COL.MARK]
+];
+
+function drawPauseHelp() {
+  panel(4, 20, 232, 214);
+  drawTextC('PAUSE', 26, COL.MARK, 2, true);
+  let y = 46;
+  for (const line of HELP) {
+    if (!line) { y += 4; continue; }
+    drawText(line[0], 10, y, line[1]);
+    y += 8;
+  }
+  if (blink(2)) drawTextC('TIPPEN ODER P ZUM WEITERSPIELEN', 222, COL.GRUEN);
+}
+
+// ---------- Rangliste ----------
+function lbRow(i, e, y, rowsTop) {
+  const mine = playerName && e.name === playerName;
+  const col = mine ? COL.GELB : i < 3 ? COL.MARK : COL.GRAU;
+  const nr = String(i + 1) + '.';
+  drawText(nr, 34 - textWidth(nr), y, col);
+  drawText(e.name, 40, y, col);
+  drawText('LV ' + e.level, 150, y, mine ? COL.GELB_D : COL.GRAU_D);
+  const sc = String(e.score);
+  drawText(sc, 214 - textWidth(sc), y, col);
+  if (mine && blink(2)) rect(36, y + 1, 2, 3, COL.GELB);
+}
+
+function lbStatusText() {
+  switch (lb.status) {
+    case 'loading': return ['RANGLISTE WIRD GELADEN', COL.GRAU];
+    case 'sending': return ['PUNKTE WERDEN GESENDET', COL.GRAU];
+    case 'error':   return ['RANGLISTE NICHT ERREICHBAR', COL.ROT];
+    case 'noname':  return ['OHNE NAME NICHT GEWERTET', COL.GRAU];
+    case 'zero':    return ['0 PUNKTE WERDEN NICHT GEWERTET', COL.GRAU];
+    case 'badname': return ['NAME NICHT ERLAUBT, BITTE ÄNDERN', COL.ROT];
+    case 'toofast': return ['ZU KURZ NACH DEM LETZTEN EINTRAG', COL.GRAU];
+    case 'implausible': return ['PUNKTZAHL NICHT PLAUSIBEL', COL.ROT];
+    default: return null;
+  }
+}
+
+function drawOverWithBoard() {
+  panel(16, 24, 208, 212);
+  drawTextC('GAME OVER', 30, COL.ROT, 3, true);
+  drawTextC(state.reason, 50, COL.GELB, 2);
+  drawTextC('PUNKTE ' + state.score + '   LEVEL ' + state.level, 66, COL.MARK);
+  drawTextC((state.newHs ? 'NEUER PERSÖNLICHER ' : 'PERSÖNLICHER ') + 'HIGHSCORE ' + state.hs, 76, state.newHs ? COL.GRUEN : COL.GRAU);
+  rect(40, 88, 160, 1, COL.GELB_D);
+  drawTextC('RANGLISTE', 94, COL.GELB);
+  const st = lbStatusText();
+  if (lb.status === 'ok') {
+    lb.top.slice(0, 10).forEach((e, i) => lbRow(i, e, 106 + i * 9));
+    if (lb.rank) drawTextC('DEIN RANG: ' + lb.rank + ' VON ' + lb.total, 204, lb.rank <= 3 ? COL.GRUEN : COL.MARK);
+  } else if (st) {
+    if (lb.top.length && lb.status !== 'error') lb.top.slice(0, 10).forEach((e, i) => lbRow(i, e, 106 + i * 9));
+    drawTextC(st[0], 204, st[1]);
+  }
+  if (blink(2)) drawTextC('NOCHMAL DRÜCKEN ODER ENTER', 220, COL.MARK);
+}
+
+function drawBoard() {
+  rect(16, 24, 208, 212, COL.SCHWARZ);     // deckend, damit der Titeltext nicht durchscheint
+  panel(16, 24, 208, 212);
+  drawTextC('RANGLISTE', 32, COL.GELB, 2, true);
+  drawTextC('BESTE PUNKTZAHL PRO SPIELER', 50, COL.GRAU);
+  if (lb.status === 'ok') {
+    if (!lb.top.length) drawTextC('NOCH KEINE EINTRÄGE', 110, COL.GRAU);
+    lb.top.slice(0, 10).forEach((e, i) => lbRow(i, e, 66 + i * 12));
+    if (lb.total > 10) drawTextC(lb.total + ' SPIELER INSGESAMT', 190, COL.GRAU_D);
+  } else {
+    const st = lbStatusText() || ['', COL.GRAU];
+    drawTextC(st[0], 110, st[1]);
+  }
+  if (blink(2)) drawTextC('TIPPEN ZUM SCHLIESSEN', 220, COL.MARK);
+}
+
+let BG = null;
+
+function render() {
+  if (!BG) BG = buildBackground();
+  ctx.drawImage(BG, 0, 0);
+  drawCrosswalks();
+  for (const d of DIRS) for (const v of state.queues[d] || []) drawVehicle(v);
+  drawPeds();
+  drawHeads();
+  drawJam();
+  if (state.flash && blink(10)) rect(state.flash.x - 3, state.flash.y - 3, 8, 8, COL.ROT);
+  for (const p of state.particles) rect(Math.round(p.x), Math.round(p.y), 1, 1, p.c);
+  for (const p of state.popups) {
+    const px = Math.round(p.x) - 3, py = Math.round(p.y) - 8;
+    drawText(p.text, px + 1, py + 1, COL.SCHWARZ); drawText(p.text, px, py, COL.GELB);
+  }
+  drawHud();
+  drawPanel();
+
+  if (state.mode === 'title') {
+    panel(14, 26, 212, 196);
+    drawTextC('ZWISCHENZEIT', 38, COL.GELB, 3, true);
+    drawTextC('STEUERE DIE LICHTSIGNALANLAGE', 62, COL.MARK);
+    rect(40, 74, 160, 1, COL.GELB_D);
+    drawTextC('KNÖPFE UNTEN ODER TIPPEN AUFS FELD', 82, COL.MARK);
+    drawTextC('TIPPEN AUFS FELD = PHASE WECHSELN', 92, COL.MARK);
+    drawTextC('P: PAUSE   R: NEUSTART   M: TON', 102, COL.MARK);
+    rect(40, 114, 160, 1, COL.GELB_D);
+    drawTextC('KEINE UNFÄLLE. KEIN RÜCKSTAU.', 122, COL.GRUEN);
+    drawTextC('ROT UMRANDET = ROTLICHTFAHRER', 134, COL.ROT);
+    drawTextC('GELB BLINKEND = ROTLÄUFER', 144, COL.GELB);
+    drawTextC('BLINKER = ABBIEGER, LINKS GIBT +2 PUNKTE', 154, COL.MARK);
+    drawTextC('LINKS WARTEN SIE IM KNOTEN AUF EINE LÜCKE', 164, COL.GRAU);
+    if (blink(2)) drawTextC('START DRÜCKEN', 186, COL.MARK, 2, true);
+    drawTextC('HIGHSCORE ' + state.hs, 208, COL.GELB);
+  } else if (state.mode === 'pause') {
+    drawPauseHelp();
+  } else if (state.mode === 'over' && LB_ON) {
+    drawOverWithBoard();
+  } else if (state.mode === 'over') {
+    panel(30, 60, 180, 116);
+    drawTextC('GAME OVER', 72, COL.ROT, 3, true);
+    drawTextC(state.reason, 96, COL.GELB, 2);
+    drawTextC('PUNKTE ' + state.score, 118, COL.MARK, 2);
+    drawTextC((state.newHs ? 'NEUER ' : '') + 'HIGHSCORE ' + state.hs, 140, state.newHs ? COL.GRUEN : COL.MARK);
+    if (blink(2)) drawTextC('NOCHMAL DRÜCKEN ODER ENTER', 158, COL.MARK);
+  }
+
+  if (state.board) drawBoard();
+
+  if (state.mode === 'play' && state.toastT > 0) {
+    panel(60, 50, 120, 22);
+    drawTextC(state.toast, 55, state.toast === 'UNFALL!' ? COL.ROT : COL.GELB, 2, true);
+  }
+}
+
+/* =========================================================
+   9. EINGABE
+   ========================================================= */
+let scale = 1;
+function resize() {
+  // Ab Faktor 2 ganzzahlig (pixelscharf), auf kleinen Bildschirmen (Handy) bildschirmfüllend
+  const fit = Math.min(document.body.clientWidth / W, document.body.clientHeight / CH);
+  scale = fit >= 2 ? Math.floor(fit) : fit;
+  canvas.style.width = (W * scale) + 'px';
+  canvas.style.height = (CH * scale) + 'px';
+}
+window.addEventListener('resize', resize);
+
+// Namensdialog
+const nameBox = document.getElementById('namebox');
+const nameInput = document.getElementById('nameinput');
+let nameOpen = false, afterName = null;
+
+function openNameDialog(then) {
+  if (!LB_ON) { if (then) then(); return; }
+  nameOpen = true;
+  afterName = then || null;
+  nameInput.value = playerName;
+  document.getElementById('privacylink').hidden = !PRIVACY_PAGE;
+  nameBox.hidden = false;
+  setTimeout(() => nameInput.focus(), 50);
+}
+
+function closeNameDialog(save) {
+  if (save) {
+    const n = cleanName(nameInput.value);
+    if (!n) { nameInput.focus(); return; }       // leerer Name: Dialog bleibt offen
+    playerName = n;
+  }
+  nameAsked = true;
+  storeName();
+  nameOpen = false;
+  nameBox.hidden = true;
+  nameInput.blur();
+  const f = afterName;
+  afterName = null;
+  if (f) f();
+}
+
+nameInput.addEventListener('input', () => {
+  const v = nameInput.value.toUpperCase().replace(/[^A-Z0-9ÄÖÜ .\-]/g, '').slice(0, 12);
+  if (v !== nameInput.value) nameInput.value = v;
+});
+nameInput.addEventListener('keydown', e => {
+  e.stopPropagation();
+  if (e.key === 'Enter') { e.preventDefault(); closeNameDialog(true); }
+  if (e.key === 'Escape') closeNameDialog(false);
+});
+document.getElementById('nameok').addEventListener('click', () => closeNameDialog(true));
+document.getElementById('nameskip').addEventListener('click', () => closeNameDialog(false));
+
+// Vor dem ersten Spiel einmal nach dem Namen fragen
+function requestStart() {
+  state.board = false;
+  if (LB_ON && !nameAsked && !playerName) openNameDialog(() => startGame(false));
+  else startGame(false);
+}
+
+window.addEventListener('keydown', e => {
+  if (nameOpen) return;
+  initAudio();
+  const menu = state.mode === 'title' || state.mode === 'over';
+  if (state.board && (e.code === 'Escape' || e.code === 'KeyL' || e.code === 'Space')) { state.board = false; e.preventDefault(); return; }
+  if (menu && e.code === 'KeyL') { openBoard(); return; }
+  if (menu && e.code === 'KeyN') { e.preventDefault(); openNameDialog(); return; }
+  switch (e.code) {
+    case 'Space':
+      e.preventDefault();
+      if (state.mode === 'play' && state.freeze <= 0) requestSwitch();
+      break;
+    case 'KeyF':
+      if (state.mode === 'play' && state.freeze <= 0) requestPed();
+      break;
+    case 'KeyP':
+      if (state.mode === 'play') state.mode = 'pause';
+      else if (state.mode === 'pause') state.mode = 'play';
+      break;
+    case 'KeyM':
+      toggleSound();
+      break;
+    case 'KeyR':
+      if (state.mode !== 'title') requestStart();
+      break;
+    case 'Enter':
+    case 'NumpadEnter':
+      if (menu) requestStart();
+      break;
+  }
+});
+
+canvas.addEventListener('pointerdown', e => {
+  e.preventDefault();
+  initAudio();
+  const r = canvas.getBoundingClientRect();
+  const x = (e.clientX - r.left) / r.width * W;
+  const y = (e.clientY - r.top) / r.height * CH;
+  if (state.board) { state.board = false; return; }
+  if (y >= PY) {
+    const hit = Object.keys(BTN).find(k => {
+      const [bx, by, bw, bh] = BTN[k];
+      return x >= bx && x < bx + bw && y >= by && y < by + bh;
+    });
+    if (hit === 'sound') { toggleSound(); return; }
+    if (state.mode === 'title' || state.mode === 'over') {
+      if (hit === 'phase') requestStart();
+      else if (hit === 'fg' && LB_ON) openBoard();
+      else if (hit === 'pause' && LB_ON) openNameDialog();
+      return;
+    }
+    if (hit === 'restart') { startGame(false); return; }
+    if (hit === 'pause') { state.mode = state.mode === 'play' ? 'pause' : 'play'; return; }
+    if (state.mode !== 'play' || state.freeze > 0) return;
+    if (hit === 'phase') requestSwitch();
+    if (hit === 'fg') requestPed();
+    return;
+  }
+  // Im Titel startet ein Tipp aufs Feld das Spiel, bei Game Over nur der Knopf (damit man die Rangliste lesen kann)
+  if (state.mode === 'title') { requestStart(); return; }
+  if (state.mode === 'over') { if (!LB_ON) requestStart(); return; }
+  if (state.mode === 'pause') { state.mode = 'play'; return; }
+  if (state.freeze > 0) return;
+  requestSwitch();
+});
+
+/* =========================================================
+   10. GAME LOOP (fester Zeitschritt 60 Hz)
+   ========================================================= */
+const DT = 1 / 60;
+let last = performance.now(), acc = 0;
+
+function frame(now) {
+  let d = (now - last) / 1000;
+  last = now;
+  if (d > 0.25) d = 0.25;
+  acc += d;
+  while (acc >= DT) { step(DT); acc -= DT; }
+  musicTick();
+  render();
+  requestAnimationFrame(frame);
+}
+
+loadHs();
+loadSound();
+loadName();
+startGame(true);
+resize();
+requestAnimationFrame(frame);
+
+// Offline-Fähigkeit als Web-App
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+  window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => {}); });
+}
+</script>
+</body>
+</html>
